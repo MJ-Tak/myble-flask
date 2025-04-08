@@ -7,6 +7,7 @@ import pytesseract
 from datetime import datetime
 import requests
 
+
 def get_ngrok_url():
     try:
         # ngrok 로컬 API로부터 public_url 가져오기
@@ -17,14 +18,14 @@ def get_ngrok_url():
                 return tunnel["public_url"]
         return None
     except Exception as e:
-        print("⚠️ ngrok 주소를 불러오지 못했습니다:", e)
+        print("\u26a0\ufe0f ngrok 주소를 불러오지 못했습니다:", e)
         return None
 
 # 환경변수 또는 자동 감지로 ngrok 주소 설정
 NGROK_URL = os.environ.get("NGROK_URL") or get_ngrok_url()
 print(f"🌐 현재 ngrok 주소: {NGROK_URL}")
 
-# ✅ 환경 구분
+# ⬆️ 환경 구분 (로컬이면 serial 사용 가능)
 is_local = os.environ.get("IS_LOCAL", "0") == "1"
 
 if is_local:
@@ -36,7 +37,6 @@ if is_local:
 else:
     arduino = None
 
-
 app = Flask(__name__)
 CORS(app)
 
@@ -46,19 +46,19 @@ CATEGORY_MAP = {
     "사랑": "sarang",
     "분노": "bunno",
     "감사": "gamsa",
-    "힘듦": "himdeum",
+    "히르르름": "himdeum",
     "두려움": "duryeoum",
     "결정": "gyeoljeong",
     "용서": "yongseo",
     "믿음": "mideum",
     "위인": "wiin",
     "과학": "gwahak",
-    "명언": "myeongeon"
+    "명연": "myeongeon"
 }
 
-# ✅ ngrok 주소를 저장할 변수
+# ✨ ngrok 주소 저장 변수 (Render 서버에서도 수신 가능하게)
 global CURRENT_NGROK_URL
-CURRENT_NGROK_URL = ""
+CURRENT_NGROK_URL = NGROK_URL or ""
 
 @app.route('/update-ngrok', methods=['POST'])
 def update_ngrok():
