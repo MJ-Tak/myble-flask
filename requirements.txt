@@ -3,3 +3,4 @@ flask-cors
 pillow
 pytesseract
 python-dotenv
+requests
