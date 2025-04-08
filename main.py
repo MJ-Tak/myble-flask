@@ -7,6 +7,23 @@ import pytesseract
 from datetime import datetime
 import requests
 
+def get_ngrok_url():
+    try:
+        # ngrok 로컬 API로부터 public_url 가져오기
+        response = requests.get("http://127.0.0.1:4040/api/tunnels")
+        data = response.json()
+        for tunnel in data["tunnels"]:
+            if tunnel["proto"] == "https":
+                return tunnel["public_url"]
+        return None
+    except Exception as e:
+        print("⚠️ ngrok 주소를 불러오지 못했습니다:", e)
+        return None
+
+# 환경변수 또는 자동 감지로 ngrok 주소 설정
+NGROK_URL = os.environ.get("NGROK_URL") or get_ngrok_url()
+print(f"🌐 현재 ngrok 주소: {NGROK_URL}")
+
 # ✅ 환경 구분
 is_local = os.environ.get("IS_LOCAL", "0") == "1"
 
