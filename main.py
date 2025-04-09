@@ -1,7 +1,8 @@
 # ✅ 위쪽 전역 import에는 serial 절대 쓰지 마세요!
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-import csv, os, random, difflib, io, time
+import csv, os, random, difflib, io, time, easyocr
+
 from PIL import Image
 import pytesseract
 from datetime import datetime
@@ -202,40 +203,30 @@ def get_today_quote():
 
 @app.route('/submit-writing', methods=['POST'])
 def check_handwriting():
+    student_id = request.form.get("student_id")
+    target_text = request.form.get("target_text")
+    image_file = request.files.get("image")
+
+    if not student_id or not image_file or not target_text:
+        return jsonify({"status": "fail", "message": "데이터가 부족합니다."}), 400
+
     try:
-        # ✅ 전달된 값 출력
-        student_id = request.form.get("student_id")
-        target_text = request.form.get("target_text")
-        image_file = request.files.get("image")
+        # easyocr로 이미지 텍스트 추출
+        reader = easyocr.Reader(['ko', 'en'])  # 한국어 + 영어 지원
+        image_bytes = image_file.read()
+        result = reader.readtext(image_bytes, detail=0)
+        extracted_text = " ".join(result).strip()
 
-        print("🟢 [submit-writing] 호출됨")
-        print("📘 student_id:", student_id)
-        print("📘 target_text:", target_text)
-        print("📘 image_file:", image_file)
-
-        # ✅ 필수 데이터 검증
-        if not student_id or not target_text or not image_file:
-            print("❌ 누락된 필드 있음")
-            return jsonify({"status": "fail", "message": "데이터가 부족합니다."}), 400
-
-        # ✅ 이미지 OCR 처리
-        image = Image.open(image_file.stream).convert("L")
-        custom_config = r'--oem 3 --psm 6'
-        extracted_text = pytesseract.image_to_string(image, lang='kor', config=custom_config)
-
-        similarity = difflib.SequenceMatcher(None, target_text.strip(), extracted_text.strip()).ratio()
-        print(f"📝 OCR 결과: '{extracted_text.strip()}'")
-        print(f"🎯 목표 텍스트: '{target_text.strip()}'")
-        print(f"📊 유사도: {similarity:.2f}")
+        # 유사도 계산
+        similarity = difflib.SequenceMatcher(None, target_text.strip(), extracted_text).ratio()
+        print(f"📝 OCR 결과: {extracted_text} / 🎯 목표: {target_text.strip()} / 📊 유사도: {similarity:.2f}")
 
         if similarity >= 0.7:
             notify_arduino()
             return jsonify({"status": "success", "message": "성공적으로 작성했습니다!"})
         else:
             return jsonify({"status": "fail", "message": "다시 시도해주세요."})
-
     except Exception as e:
-        print("🚨 서버 오류 발생:", e)
         return jsonify({"status": "fail", "message": f"서버 오류 발생: {str(e)}"}), 500
 
 if __name__ == '__main__':
