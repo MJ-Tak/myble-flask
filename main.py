@@ -39,7 +39,8 @@ else:
     arduino = None
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, resources={r"/*": {"origins": "*"}})  # 가장 간단한 해결책
+
 
 DATA_FOLDER = "data"
 ATTEMPT_FILE = os.path.join(DATA_FOLDER, "attempts.csv")
